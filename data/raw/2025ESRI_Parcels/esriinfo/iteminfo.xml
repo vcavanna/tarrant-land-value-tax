@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ESRI_ItemInformation Culture='en-US'>
+<name>2025ESRI_Parcels</name>
+<guid>D6E7D02E-7003-4198-AF59-19039E1AD92D</guid>
+<version>1.0</version>
+<created></created>
+<modified></modified>
+<catalogpath></catalogpath>
+<snippet>2025TAD Parcel data presented with a relationship class representing a feature class and non-spatial tables.</snippet>
+<description>&lt;DIV STYLE=&quot;text-align:Left;&quot;&gt;&lt;DIV&gt;&lt;DIV&gt;&lt;P&gt;&lt;SPAN&gt;TADParcels with real and business personal data as related tables.&lt;/SPAN&gt;&lt;/P&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/DIV&gt;</description>
+<summary>2025TAD Parcel data presented with a relationship class representing a feature class and non-spatial tables.</summary>
+<title>2025ESRI_Parcels</title>
+<tags>Tarrant Appraisal District,TAD</tags>
+<type>Map Package</type>
+<typekeywords>
+<typekeyword>Map Package</typekeyword>
+<typekeyword>Map</typekeyword>
+<typekeyword>2D</typekeyword>
+<typekeyword>ArcGIS Pro</typekeyword>
+<typekeyword>mpkx</typekeyword>
+</typekeywords>
+<thumbnail>thumbnail/thumbnail.png</thumbnail>
+<documentation></documentation>
+<url></url>
+<extent>
+<xmin>-179.999988540844</xmin>
+<ymin>-85.0511277912625</ymin>
+<xmax>179.999988540844</xmax>
+<ymax>85.0511277912625</ymax>
+</extent>
+<spatialreference>NAD_1983_StatePlane_Texas_North_Central_FIPS_4202_Feet</spatialreference>
+<minScale>1.6021618264441466e-306</minScale>
+<maxScale>1.691193298273401e-306</maxScale>
+<datalastModifiedTime></datalastModifiedTime>
+<accessinformation>IS/GIS</accessinformation>
+<licenseinfo>&lt;DIV STYLE=&quot;text-align:Left;&quot;&gt;&lt;DIV&gt;&lt;DIV&gt;&lt;P&gt;&lt;SPAN&gt;This product is for informational purposes and may not have been prepared for or be suitable for legal, engineering, or surveying purposes, It does not represent an on-the-ground survey and represents only the approximate relative location of property boundaries.&lt;/SPAN&gt;&lt;/P&gt;&lt;/DIV&gt;&lt;/DIV&gt;&lt;/DIV&gt;</licenseinfo>
+</ESRI_ItemInformation>

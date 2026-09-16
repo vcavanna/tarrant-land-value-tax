@@ -1,0 +1,50 @@
+# Optional containerized stack (Docker not required for host-native A.2).
+# Usage from repo root:
+#   docker compose -f infra/docker/docker-compose.yml up -d
+#   infra/scripts/bootstrap-db.sh --docker   # if role/db not created by init
+#
+# Ports mirror the native stack; same-origin via nginx service on :8080.
+
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tad_analysis
+    ports:
+      - "5432:5432"
+    volumes:
+      - tad_pgdata:/var/lib/postgresql/data
+      - ../scripts/docker-init-db.sh:/docker-entrypoint-initdb.d/10-tad.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tad_analysis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  martin:
+    image: ghcr.io/maplibre/martin:v1.13.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://tad:tad@db:5432/tad_analysis
+    command: ["--listen-addresses", "0.0.0.0:3000", "postgresql://tad:tad@db:5432/tad_analysis"]
+    ports:
+      - "3000:3000"
+
+  # Laravel is expected on the host for fast PHP iteration, or add a php service later.
+  # nginx proxies / to host.docker.internal:8000 when using native artisan serve.
+
+  nginx:
+    image: nginx:1.28-alpine
+    depends_on:
+      - martin
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-compose.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  tad_pgdata:

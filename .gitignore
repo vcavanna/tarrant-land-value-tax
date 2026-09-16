@@ -1,0 +1,85 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Laravel (when scaffolded under app/)
+/app/vendor/
+/app/node_modules/
+/app/public/hot
+/app/public/storage
+/app/storage/*.key
+/app/storage/app/*
+!/app/storage/app/.gitignore
+/app/storage/framework/cache/*
+!/app/storage/framework/cache/.gitignore
+/app/storage/framework/sessions/*
+!/app/storage/framework/sessions/.gitignore
+/app/storage/framework/views/*
+!/app/storage/framework/views/.gitignore
+/app/storage/logs/*
+!/app/storage/logs/.gitignore
+/app/bootstrap/cache/*
+!/app/bootstrap/cache/.gitignore
+/app/.phpunit.result.cache
+/app/Homestead.json
+/app/Homestead.yaml
+/app/auth.json
+/app/npm-debug.log
+/app/yarn-error.log
+
+# Node (frontend tooling if present at repo root or app)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Python ETL
+.venv/
+venv/
+etl/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Geospatial data — large / regenerable (keep layout, not blobs)
+data/raw/**/*.gdb/
+data/raw/**/commondata/
+data/processed/**
+!data/processed/.gitkeep
+!data/raw/**/.gitkeep
+
+# Allow small package metadata under raw if ever added without GDB
+# (GDB directory itself is ignored above)
+
+# Database dumps & tile caches
+*.dump
+*.sql.gz
+*.gpkg
+*.geojson
+*.mbtiles
+*.pmtiles
+!etl/**/*.sql
+
+# Docker volumes / local overrides
+docker-compose.override.yml
+infra/docker/.data/
+
+# Local stack runtime (pids, logs) and downloaded Martin binaries
+.run/
+infra/bin/martin
+infra/bin/martin-cp
+infra/bin/*.tar.gz
+
+# Root stack env (keep .env.example)
+/.env

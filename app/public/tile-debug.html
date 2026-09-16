@@ -1,0 +1,154 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Parcel tile debug</title>
+<!--
+  Section C verification scratch page, NOT the Section E frontend.
+  Reads all deploy constants from /api/map-config (D.4) — nothing baked in.
+  Served same-origin at http://127.0.0.1:8080/tile-debug.html
+-->
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; font: 13px system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  #panel {
+    position: absolute; top: 10px; left: 10px; z-index: 1; background: #fff;
+    padding: 10px 12px; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.3);
+    max-width: 260px; line-height: 1.5;
+  }
+  #panel button { margin-right: 4px; padding: 3px 8px; cursor: pointer; }
+  #panel button[aria-pressed="true"] { background: #222; color: #fff; }
+  #ramp { height: 10px; margin: 6px 0 2px;
+          background: linear-gradient(90deg,#fff5eb,#fd8d3c,#7f2704); border: 1px solid #ccc; }
+  .row { display: flex; justify-content: space-between; font-size: 11px; color: #555; }
+  #out { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; font-size: 12px; }
+  code { background: #f4f4f4; padding: 0 3px; }
+</style>
+<div id="map"></div>
+<div id="panel">
+  <div><strong>Parcel tiles</strong> — Section C debug</div>
+  <div style="margin:6px 0">
+    <button data-metric="land" aria-pressed="true">land</button>
+    <button data-metric="total" aria-pressed="false">total</button>
+    <button data-metric="appraised" aria-pressed="false">appraised</button>
+  </div>
+  <div id="ramp"></div>
+  <div class="row"><span id="lo"></span><span id="hi"></span></div>
+  <div id="capNote" style="font-size:11px;color:#555"></div>
+  <div id="out">Loading config…</div>
+  <div id="licence" style="margin-top:8px;font-size:10px;color:#888;line-height:1.35"></div>
+</div>
+<script>
+// Nothing about the deploy is hard-coded here any more: cap, k, colour domain,
+// minzoom, tile URL and basemap all arrive from GET /api/map-config (D.4).
+// Reloading the ETL changes the colour domain and this page follows it.
+let CFG, metric, map;
+
+function paint(m) {
+  const { cap, color_min: min, color_max: max } = CFG.metrics[m];
+  return ['case',
+    ['>', ['get', m + '_vpa'], cap], '#000000',
+    ['interpolate', ['linear'], ['get', m + '_vpa'],
+      min,                  '#fff5eb',
+      min + (max-min)*0.25, '#fdd0a2',
+      min + (max-min)*0.5,  '#fd8d3c',
+      min + (max-min)*0.75, '#d94801',
+      max,                  '#7f2704']];
+}
+
+function labels() {
+  const { color_min, color_max, over_cap_count, eligible_count } = CFG.metrics[metric];
+  lo.textContent = '$' + Math.round(color_min).toLocaleString() + '/ac';
+  hi.textContent = '$' + Math.round(color_max).toLocaleString() + '/ac';
+  capNote.textContent = 'black = over $' + CFG.metrics[metric].cap.toLocaleString()
+    + '/ac (' + (100 * over_cap_count / eligible_count).toFixed(2) + '% of '
+    + eligible_count.toLocaleString() + ')';
+}
+
+fetch('/api/map-config').then(r => r.json()).then(({ data, meta }) => {
+  CFG = data;
+  metric = data.default_metric;
+  document.querySelectorAll('#panel button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.metric === metric)));
+  licence.textContent = meta.license;
+
+  map = new maplibregl.Map({
+    container: 'map',
+    style: data.basemap.style,
+    center: data.view.center,
+    zoom: data.tiles.minzoom + 1,
+    maxBounds: [[data.view.bounds[0] - 0.3, data.view.bounds[1] - 0.3],
+                [data.view.bounds[2] + 0.3, data.view.bounds[3] + 0.3]],
+  });
+  map.addControl(new maplibregl.NavigationControl());
+
+  map.on('load', () => {
+    map.addSource('parcels', {
+      type: 'vector',
+      tiles: [location.origin + data.tiles.url],
+      minzoom: data.tiles.minzoom,
+      maxzoom: data.tiles.maxzoom,
+    });
+    map.addLayer({
+      id: 'parcels-fill', type: 'fill', source: 'parcels',
+      'source-layer': data.tiles.source_layer, minzoom: data.tiles.minzoom,
+      paint: { 'fill-color': paint(metric), 'fill-opacity': 0.75,
+               'fill-outline-color': 'rgba(0,0,0,0.25)' },
+    });
+    labels();
+    wireInteractions();
+  });
+});
+
+function wireInteractions() {
+  // The metric toggle is a paint change only: the tile already carries all three
+  // VPA columns, so nothing is refetched. That is the lean-tile design paying off.
+  document.querySelectorAll('#panel button').forEach(b => {
+    b.onclick = () => {
+      metric = b.dataset.metric;
+      document.querySelectorAll('#panel button')
+        .forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      map.setPaintProperty('parcels-fill', 'fill-color', paint(metric));
+      labels();
+    };
+  });
+
+  // f.id is the MVT feature id = parcels.parcel_id, which is exactly what the
+  // drawer endpoint takes (D.2).
+  map.on('click', 'parcels-fill', async e => {
+    const id = e.features[0].id;
+    out.textContent = 'Loading parcel ' + id + '…';
+
+    const res = await fetch('/api/parcels/id/' + id);
+    if (!res.ok) { out.textContent = 'Drawer error: HTTP ' + res.status; return; }
+    const { data } = await res.json();
+
+    const money = n => n === null ? '—' : '$' + Math.round(n).toLocaleString();
+    out.innerHTML =
+      '<strong>' + (data.location.situs || data.taxpin) + '</strong><br>' +
+      '<span style="color:#666">' + data.taxpin + ' · ' + data.classification.property_class +
+        ' · city ' + data.location.city_code + '</span><br>' +
+      data.acres.toFixed(3) + ' acres · ' + data.accounts + ' account(s)<br>' +
+      '<div style="margin:5px 0">' +
+        ['land','total','appraised'].map(m =>
+          (m === metric ? '<strong>' : '') + m + ': ' + money(data.vpa[m]) + '/ac' +
+          (m === metric ? '</strong>' : '')).join('<br>') +
+      '</div>' +
+      (data.comps.length
+        ? '<div style="border-top:1px solid #eee;padding-top:6px">Comparable land:<br>' +
+          data.comps.map(c =>
+            '<span style="color:#666">' + c.ratio + '×</span> ' + money(c.vpa.land) +
+            '/ac <span style="color:#999">(' + c.acres.toFixed(2) + ' ac, tier ' +
+            c.tier + ')</span>').join('<br>') + '</div>'
+        : '<em>No comps — parcel is not on the map.</em>');
+  });
+
+  map.on('mouseenter', 'parcels-fill', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'parcels-fill', () => map.getCanvas().style.cursor = '');
+  map.on('zoomend', () => {
+    if (map.getZoom() < CFG.tiles.minzoom) {
+      out.textContent = 'Below z' + CFG.tiles.minzoom + ' — basemap only.';
+    }
+  });
+}
+</script>

@@ -1,0 +1,17 @@
+/* MapLibre's stylesheet is unlayered, and unlayered CSS beats layered CSS in the
+   cascade no matter the specificity or order. Tailwind 4 puts its utilities in
+   layers, so an unlayered `.maplibregl-map { position: relative }` silently
+   overrode `class="absolute inset-0"` on the map container and collapsed it to
+   zero height. Declaring the layer first makes it the lowest priority, so
+   Tailwind utilities apply to MapLibre elements as written. */
+@layer maplibre;
+@import 'tailwindcss';
+@import 'maplibre-gl/dist/maplibre-gl.css' layer(maplibre);
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}

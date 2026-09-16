@@ -1,0 +1,33 @@
+# Martin tile server — local development
+# https://maplibre.org/martin/config-file.html
+#
+# Section C: the parcel source is the SQL function public.parcels_mvt(z,x,y),
+# published explicitly. Auto-discovery is left off so that adding a table to the
+# database never silently publishes it on a public endpoint.
+
+# Martin refuses --config together with a positional connection string, so the
+# connection lives here and reads DATABASE_URL from the environment.
+#   DATABASE_URL=postgresql://tad:tad@127.0.0.1:5432/tad_analysis \
+#     ./infra/bin/martin --config infra/martin/config.yaml
+
+listen_addresses: "0.0.0.0:3000"
+
+# Martin builds TileJSON tile URLs from its own address unless told the public
+# prefix it is served under. Without this MapLibre would read the TileJSON and
+# then fetch tiles straight from Martin, bypassing the same-origin proxy.
+base_path: /tiles
+
+# Prefer gzip for MVT over the wire. Measured at z14: 54 kB raw -> 37 kB gzipped.
+preferred_encoding: gzip
+
+postgres:
+  connection_string: ${DATABASE_URL:-postgresql://tad:tad@127.0.0.1:5432/tad_analysis}
+
+  # Explicit publication; no auto_publish.
+  functions:
+    parcels:
+      schema: public
+      function: parcels_mvt
+      minzoom: 13
+      maxzoom: 20
+      bounds: [-97.553, 32.548, -97.031, 32.994]   # Tarrant County

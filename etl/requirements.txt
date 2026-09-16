@@ -1,0 +1,17 @@
+# Python ETL tooling (Section A.3) — install into etl/.venv
+#
+#   python3 -m venv etl/.venv
+#   etl/.venv/bin/pip install -r etl/requirements.txt
+#
+# pyogrio wheels ship a recent GDAL and can read Esri FileGDB via OpenFileGDB.
+# System gdal-bin (ogrinfo/ogr2ogr) is recommended as well for CLI workflows (Section B).
+
+pyogrio>=0.10
+geopandas>=1.0
+shapely>=2.0
+pyproj>=3.6
+numpy>=1.26
+pandas>=2.0
+SQLAlchemy>=2.0
+psycopg[binary]>=3.1
+geoalchemy2>=0.15
