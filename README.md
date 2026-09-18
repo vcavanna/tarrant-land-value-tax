@@ -1,4 +1,6 @@
-# tad-analysis
+# Tarrant County Appraisal District - Interactive Value per Acre Map
+
+<img width="1600" height="871" alt="image" src="https://github.com/user-attachments/assets/4f1f703a-70ff-4092-8024-93d315853a11" />
 
 Interactive map of every parcel in **Tarrant County, Texas**, coloured by **value per acre**.
 
